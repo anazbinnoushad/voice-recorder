@@ -86,3 +86,56 @@ body {
     align-items: center;
     gap: 6px;
 }
+
+/* Audio List section */
+
+.audio-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.audio-entry {
+    border-bottom: #DDDDDD 1px solid;
+    padding-bottom: 12px;
+}
+
+.audio-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 12px;
+}
+
+.audio-date {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.audio-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.play-section {
+    display: flex;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.action-btn {
+    width: 30px;
+    height: 30px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 1000px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
