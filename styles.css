@@ -75,7 +75,7 @@ body {
     position: absolute;
     top: 4px;
     right: 4px;
-    background-color: #FFFFFF;
+    background-color: #fff;
     border: 1px solid #e2e2e2;
     border-radius: 1000px;
     padding: 10px 16px;
@@ -88,7 +88,6 @@ body {
 }
 
 /* Audio List section */
-
 .recording-list {
     display: flex;
     flex-direction: column;
@@ -96,7 +95,7 @@ body {
 }
 
 .record-entry {
-    border-bottom: #DDDDDD 1px solid;
+    border-bottom: 1px solid #ddd;
     padding-bottom: 12px;
 }
 
@@ -119,10 +118,7 @@ body {
     justify-content: space-between;
 }
 
-.play-section {
-    display: flex;
-}
-
+.play-section,
 .action-buttons {
     display: flex;
     gap: 12px;
@@ -141,7 +137,6 @@ body {
 }
 
 /* Audio Recorder */
-
 .audio-recorder {
     position: fixed;
     bottom: 0;
@@ -156,25 +151,16 @@ body {
     width: 100%;
     margin: 0 auto;
     border-radius: 40px;
-    background: #FFFFFF;
+    background: #fff;
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
 
-.recorder-progress {
-    background-color: #e5e5e5;
-    border: none;
-    border-radius: 100px;
-    padding: 15px 30px;
-    font-size: 16px;
-}
-
-
 .done-btn {
-    background: #000000;
-    color: white;
+    background: #000;
+    color: #fff;
     border: none;
     border-radius: 100px;
     padding: 15px 30px;
@@ -186,4 +172,34 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
+}
+
+.recorder-progress {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    border-radius: 100px;
+    padding: 15px;
+}
+
+.waveform-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    background: #eef1ff;
+    border-radius: 12px;
+}
+
+.record-label {
+    position: relative;
+    z-index: 1;
+    font-size: 16px;
 }
