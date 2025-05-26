@@ -89,13 +89,13 @@ body {
 
 /* Audio List section */
 
-.audio-list {
+.recording-list {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-.audio-entry {
+.record-entry {
     border-bottom: #DDDDDD 1px solid;
     padding-bottom: 12px;
 }
@@ -165,6 +165,7 @@ body {
 
 .recorder-progress {
     background-color: #e5e5e5;
+    border: none;
     border-radius: 100px;
     padding: 15px 30px;
     font-size: 16px;
