@@ -139,3 +139,50 @@ body {
     justify-content: center;
     align-items: center;
 }
+
+/* Audio Recorder */
+
+.audio-recorder {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.audio-recorder-container {
+    max-width: 370px;
+    width: 100%;
+    margin: 0 auto;
+    border-radius: 40px;
+    background: #FFFFFF;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.recorder-progress {
+    background-color: #e5e5e5;
+    border-radius: 100px;
+    padding: 15px 30px;
+    font-size: 16px;
+}
+
+
+.done-btn {
+    background: #000000;
+    color: white;
+    border: none;
+    border-radius: 100px;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
