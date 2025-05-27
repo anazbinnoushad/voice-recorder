@@ -12,6 +12,7 @@ let audioContext, analyser, source;
 let isRecording = false;
 
 let recordingStartTime = 0;
+let countdownInterval;
 
 recordButton.onclick = async () => {
     if (!isRecording) {
@@ -25,9 +26,16 @@ function drawWaveform() {
     const canvas = document.getElementById('waveformCanvas');
     const ctx = canvas.getContext('2d');
 
+    // Get device pixel ratio for crisp rendering
+    const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    
+    ctx.scale(dpr, dpr);
 
     analyser.fftSize = 256;
     analyser.smoothingTimeConstant = 0.8;
@@ -39,10 +47,10 @@ function drawWaveform() {
         animationId = requestAnimationFrame(draw);
         analyser.getByteFrequencyData(dataArray);
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, rect.width, rect.height);
 
-        const width = canvas.width;
-        const height = canvas.height;
+        const width = rect.width;
+        const height = rect.height;
 
         ctx.fillStyle = '#A8C0FF';
         ctx.beginPath();
@@ -79,6 +87,10 @@ async function startRecording() {
     }
 
     try {
+
+        // Clear any leftover interval before starting
+        clearInterval(countdownInterval);
+
         let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioChunks = [];
         mediaRecorder = new MediaRecorder(stream);
@@ -101,8 +113,13 @@ async function startRecording() {
         source.connect(analyser);
         drawWaveform();
 
-        recordButton.querySelector('.record-label').textContent = '■ Stop';
         isRecording = true;
+        document.querySelector('.record-text').textContent = "00:00"
+        document.querySelector('.record-icon').src = './public/icons/pause-icon.svg';
+        countdownInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            document.querySelector('.record-text').textContent = formatDuration(elapsed);
+        }, 1000);
     } catch (err) {
         alert("Microphone access is required to record audio.");
         console.error("Error accessing microphone:", err);
@@ -119,7 +136,9 @@ function stopRecording() {
     }
 
     isRecording = false;
-    recordButton.querySelector('.record-label').textContent = 'Record';
+    clearInterval(countdownInterval);
+    recordButton.querySelector('.record-text').textContent = 'Record';
+    document.querySelector('.record-icon').src = './public/icons/mic-icon.svg';
 
     if (animationId) {
         cancelAnimationFrame(animationId);
@@ -132,6 +151,13 @@ function stopRecording() {
 
 function saveRecording(duration) {
     let recordings = JSON.parse(localStorage.getItem('recordings') || '[]');
+    
+    // Clean up old blob URLs to prevent memory leaks
+    recordings.forEach(rec => {
+        if (rec.url && rec.url.startsWith('blob:')) {
+            URL.revokeObjectURL(rec.url);
+        }
+    });
 
     let blob = new Blob(audioChunks, { type: 'audio/webm' });
     let url = URL.createObjectURL(blob);
@@ -158,13 +184,14 @@ function formatDateTime(inputString) {
     return `${monthDay} · ${time}`;
 }
 
-let currentlyPlayingAudio = null;
-
 function renderRecordings() {
     recordingsList.innerHTML = '';
     const recordings = JSON.parse(localStorage.getItem('recordings') || '[]');
 
-    recordings.forEach((rec) => {
+    const sortedRecordingsDesc = recordings.sort((a, b) => {
+        return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+    sortedRecordingsDesc.forEach((rec) => {
         const clone = recordTemplate.content.cloneNode(true);
 
         clone.querySelector('.audio-date').textContent = formatDateTime(rec.timestamp);
@@ -179,7 +206,16 @@ function renderRecordings() {
 
         audio.src = rec.url;
 
-        clone.querySelector('.duration').textContent = formatTime(rec.duration || 0);
+        clone.querySelector('.duration').textContent = formatDuration(rec.duration || 0);
+
+        // Add error handling for audio playback
+        audio.addEventListener('error', (e) => {
+            console.error('Audio playback error:', e);
+            if (playIcon) {
+                playIcon.src = './public/icons/play-icon.svg';
+                playIcon.alt = 'Play';
+            }
+        });
 
         playBtn.addEventListener('click', () => {
             document.querySelectorAll('.hidden-audio').forEach((otherAudio) => {
@@ -187,7 +223,7 @@ function renderRecordings() {
                     otherAudio.pause();
                     const otherPlayBtn = otherAudio.parentElement.querySelector('.play-toggle img');
                     if (otherPlayBtn) {
-                        otherPlayBtn.src = '/public/icons/play-icon.svg';
+                        otherPlayBtn.src = './public/icons/play-icon.svg';
                         otherPlayBtn.alt = 'Play';
                     }
                 }
@@ -196,14 +232,14 @@ function renderRecordings() {
             if (audio.paused) {
                 audio.play();
                 if (playIcon) {
-                    playIcon.src = '/public/icons/pause-icon.svg';
+                    playIcon.src = './public/icons/pause-icon.svg';
                     playIcon.alt = 'Pause';
                 }
                 animateProgress(audio, progressFill, progressThumb);
             } else {
                 audio.pause();
                 if (playIcon) {
-                    playIcon.src = '/public/icons/play-icon.svg';
+                    playIcon.src = './public/icons/play-icon.svg';
                     playIcon.alt = 'Play';
                 }
             }
@@ -221,7 +257,7 @@ function renderRecordings() {
 
         audio.addEventListener('ended', () => {
             if (playIcon) {
-                playIcon.src = '/public/icons/play-icon.svg';
+                playIcon.src = './public/icons/play-icon.svg';
                 playIcon.alt = 'Play';
             }
             progressFill.style.width = `0%`;
@@ -231,7 +267,6 @@ function renderRecordings() {
         recordingsList.appendChild(clone);
     });
 }
-
 
 function animateProgress(audio, progressFill, progressThumb) {
     function update() {
@@ -245,10 +280,10 @@ function animateProgress(audio, progressFill, progressThumb) {
     requestAnimationFrame(update);
 }
 
-function formatTime(seconds) {
+function formatDuration(seconds) {
     const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 renderRecordings();

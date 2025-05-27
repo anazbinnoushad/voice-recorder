@@ -264,7 +264,9 @@ body {
     position: relative;
     z-index: 1;
     font-size: 16px;
+    display: flex;
 }
+
 
 @media (max-width: 768px) {
     .progress-bar {
