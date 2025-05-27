@@ -208,7 +208,25 @@ function renderRecordings() {
 
         clone.querySelector('.duration').textContent = formatDuration(rec.duration || 0);
 
-        // Add error handling for audio playback
+        const downloadBtn = clone.querySelector('#download-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                const a = document.createElement('a');
+                a.href = rec.url;
+                a.download = `${rec.title.replace(/\s+/g, '_')}.webm`;
+                a.click();
+            });
+        }
+
+        const deleteBtn = clone.querySelector('#delete-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                const updatedRecordings = recordings.filter(r => r.timestamp !== rec.timestamp);
+                localStorage.setItem('recordings', JSON.stringify(updatedRecordings));
+                renderRecordings(); 
+            });
+        }
+
         audio.addEventListener('error', (e) => {
             console.error('Audio playback error:', e);
             if (playIcon) {
