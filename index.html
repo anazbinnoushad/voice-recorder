@@ -30,9 +30,19 @@
                     <div class="audio-date">Sep 3 · 12:30 PM</div>
                     <h2 class="audio-title">Momentum in FIFA and Startup Strategy</h2>
                     <div class="audio-controls">
-                        <div class="play-section">
-                            <audio controls="true" class="audio-player"></audio>
+
+                        <div class="custom-audio">
+                            <button class="play-toggle" aria-label="Play">
+                                <img src="/public/icons/play-icon.svg" width="12px" height="12px" />
+                            </button>
+                            <div class="progress-bar">
+                                <div class="progress-fill"></div>
+                                <div class="progress-thumb"></div>
+                            </div>
+                            <div class="duration">0:00</div>
                         </div>
+                        <audio class="hidden-audio"></audio>
+
                         <div class="action-buttons">
                             <button class="action-btn" aria-label="List">
                                 <img src="./public/icons/list-icon.svg" />

@@ -11,6 +11,8 @@ let audioChunks = [];
 let audioContext, analyser, source;
 let isRecording = false;
 
+let recordingStartTime = 0;
+
 recordButton.onclick = async () => {
     if (!isRecording) {
         await startRecording();
@@ -81,8 +83,15 @@ async function startRecording() {
         audioChunks = [];
         mediaRecorder = new MediaRecorder(stream);
 
+        recordingStartTime = Date.now();
+
         mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-        mediaRecorder.onstop = saveRecording;
+
+        mediaRecorder.onstop = () => {
+            const duration = Math.floor((Date.now() - recordingStartTime) / 1000);
+            saveRecording(duration);
+        };
+
         mediaRecorder.start();
 
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -90,7 +99,7 @@ async function startRecording() {
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 2048;
         source.connect(analyser);
-        drawWaveform()
+        drawWaveform();
 
         recordButton.querySelector('.record-label').textContent = '■ Stop';
         isRecording = true;
@@ -110,7 +119,7 @@ function stopRecording() {
     }
 
     isRecording = false;
-    recordButton.querySelector('.record-label').textContent = '● Record';
+    recordButton.querySelector('.record-label').textContent = 'Record';
 
     if (animationId) {
         cancelAnimationFrame(animationId);
@@ -121,7 +130,7 @@ function stopRecording() {
     }
 }
 
-function saveRecording() {
+function saveRecording(duration) {
     let recordings = JSON.parse(localStorage.getItem('recordings') || '[]');
 
     let blob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -129,11 +138,27 @@ function saveRecording() {
     let timestamp = new Date().toLocaleString();
     let title = `Recording - ${recordings.length + 1}`;
 
-    recordings.push({ url, timestamp, title });
+    recordings.push({ url, timestamp, title, duration });
     localStorage.setItem('recordings', JSON.stringify(recordings));
 
     renderRecordings();
 }
+
+function formatDateTime(inputString) {
+    const date = new Date(inputString);
+    const monthDay = date.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+    });
+    const time = date.toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+    });
+    return `${monthDay} · ${time}`;
+}
+
+let currentlyPlayingAudio = null;
 
 function renderRecordings() {
     recordingsList.innerHTML = '';
@@ -145,27 +170,85 @@ function renderRecordings() {
         clone.querySelector('.audio-date').textContent = formatDateTime(rec.timestamp);
         clone.querySelector('.audio-title').textContent = rec.title || 'Untitled Recording';
 
-        const audioEl = clone.querySelector('.audio-player');
-        audioEl.src = rec.url;
+        const audio = clone.querySelector('.hidden-audio');
+        const playBtn = clone.querySelector('.play-toggle');
+        const playIcon = playBtn.querySelector('img');
+        const progressFill = clone.querySelector('.progress-fill');
+        const progressThumb = clone.querySelector('.progress-thumb');
+        const progressBar = clone.querySelector('.progress-bar');
 
-        audioEl.onended = () => URL.revokeObjectURL(audioEl.src);
+        audio.src = rec.url;
+
+        clone.querySelector('.duration').textContent = formatTime(rec.duration || 0);
+
+        playBtn.addEventListener('click', () => {
+            document.querySelectorAll('.hidden-audio').forEach((otherAudio) => {
+                if (otherAudio !== audio) {
+                    otherAudio.pause();
+                    const otherPlayBtn = otherAudio.parentElement.querySelector('.play-toggle img');
+                    if (otherPlayBtn) {
+                        otherPlayBtn.src = '/public/icons/play-icon.svg';
+                        otherPlayBtn.alt = 'Play';
+                    }
+                }
+            });
+
+            if (audio.paused) {
+                audio.play();
+                if (playIcon) {
+                    playIcon.src = '/public/icons/pause-icon.svg';
+                    playIcon.alt = 'Pause';
+                }
+                animateProgress(audio, progressFill, progressThumb);
+            } else {
+                audio.pause();
+                if (playIcon) {
+                    playIcon.src = '/public/icons/play-icon.svg';
+                    playIcon.alt = 'Play';
+                }
+            }
+        });
+
+        progressBar.addEventListener('click', (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percent = clickX / rect.width;
+            audio.currentTime = percent * audio.duration;
+
+            progressFill.style.width = `${percent * 100}%`;
+            progressThumb.style.left = `${percent * 100}%`;
+        });
+
+        audio.addEventListener('ended', () => {
+            if (playIcon) {
+                playIcon.src = '/public/icons/play-icon.svg';
+                playIcon.alt = 'Play';
+            }
+            progressFill.style.width = `0%`;
+            progressThumb.style.left = `0%`;
+        });
 
         recordingsList.appendChild(clone);
     });
 }
 
-function formatDateTime(inputString) {
-  const date = new Date(inputString);
-  const monthDay = date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  });
-  const time = date.toLocaleString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-  return `${monthDay} · ${time}`;
+
+function animateProgress(audio, progressFill, progressThumb) {
+    function update() {
+        if (!audio.paused && !audio.ended) {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = `${percent}%`;
+            progressThumb.style.left = `${percent}%`;
+            requestAnimationFrame(update);
+        }
+    }
+    requestAnimationFrame(update);
+}
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 renderRecordings();
