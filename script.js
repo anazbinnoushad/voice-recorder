@@ -142,7 +142,7 @@ function renderRecordings() {
     recordings.forEach((rec) => {
         const clone = recordTemplate.content.cloneNode(true);
 
-        clone.querySelector('.audio-date').textContent = rec.timestamp;
+        clone.querySelector('.audio-date').textContent = formatDateTime(rec.timestamp);
         clone.querySelector('.audio-title').textContent = rec.title || 'Untitled Recording';
 
         const audioEl = clone.querySelector('.audio-player');
@@ -152,6 +152,20 @@ function renderRecordings() {
 
         recordingsList.appendChild(clone);
     });
+}
+
+function formatDateTime(inputString) {
+  const date = new Date(inputString);
+  const monthDay = date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+  const time = date.toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  return `${monthDay} · ${time}`;
 }
 
 renderRecordings();
